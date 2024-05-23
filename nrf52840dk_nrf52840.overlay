@@ -1,0 +1,8 @@
+/ {
+    leds{
+        led4: led_4 {
+			gpios = <&gpio0 27 GPIO_ACTIVE_HIGH>;
+			label = "Red LED";
+		};
+    };
+};

@@ -1,43 +1,28 @@
-/*
- * Copyright (c) 2016 Intel Corporation
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 
-/* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS   1000
+#define LED0_NODE DT_NODELABEL(led4)
+// led4 is added manually using the DT overlay which is attached to @pin27 
 
-/* The devicetree node identifier for the "led0" alias. */
-#define LED0_NODE DT_ALIAS(led0)
-
-/*
- * A build error on this line means your board is unsupported.
- * See the sample documentation for information on how to fix this.
- */
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
+
+// Expire call back function from the timer 
+static void mytimer_cb (struct k_timer *dummy){
+	gpio_pin_toggle_dt(&led); 
+}
+
+struct k_timer mytimer; 
 
 int main(void)
 {
-	int ret;
-
-	if (!gpio_is_ready_dt(&led)) {
-		return 0;
+	k_timer_init(&mytimer, mytimer_cb, NULL);	// .expiry_fn = mytimer_cb and .stop_fn = NULL
+	k_timer_start(&mytimer, K_SECONDS(20), K_SECONDS(3));  // The timer starts after 20 secs and call the CBack fn every 3 seconds 
+	
+	gpio_pin_configure_dt(&led, GPIO_OUTPUT);
+	
+	while (true){
 	}
 
-	ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
-	if (ret < 0) {
-		return 0;
-	}
-
-	while (1) {
-		ret = gpio_pin_toggle_dt(&led);
-		if (ret < 0) {
-			return 0;
-		}
-		k_msleep(SLEEP_TIME_MS);
-	}
 	return 0;
 }
